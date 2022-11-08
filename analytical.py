@@ -37,3 +37,8 @@ def get_analytical(M, l, L, x_arr, z_arr, x_val, z_val, eps):
     for x in x_val:
         u_z.append([U(x, z, n, l, M) for z in z_arr])
     return u_x, u_z
+
+
+def get_analytical1(M, l, L, x_arr, z_val, eps):
+    n = n_min(eps)
+    return np.array([U(x, z_val, n, l, M) for x in x_arr])
