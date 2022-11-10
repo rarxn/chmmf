@@ -178,8 +178,8 @@ def accuracy():
     num_array = []
     an_array = []
     for i, k in zip(I_array, K_array):
-        x_array = np.linspace(0, l, i)
-        z_array = np.linspace(0, L, k)
+        x_array = np.linspace(0, l, i + 1)
+        z_array = np.linspace(0, L, k + 1)
         x, _ = get_numerical(M, l, L, x_array, z_array, [x_val], [z_val], var)
         num_array.append(x[0])
         an_array.append(get_analytical1(M, l, L, x_array, z_val, eps))
@@ -190,6 +190,7 @@ def accuracy():
     for i in range(1, len(I_array)):
         b = np.max(np.abs(np.abs(num_array[i]) - np.abs(an_array[i])))
         c = a / b
+        print(I_array[i - 1], K_array[i - 1], a, b, c)
         table_data.append([I_array[i - 1], K_array[i - 1], a, b, c])
         a = b
 
@@ -206,8 +207,8 @@ def convergence():
     ax1.plot(x_array, np.abs(x[0]), label='analytical')
     ax2.plot(z_array, np.abs(z[0]), label='analytical')
     for i, k in zip(I_array, K_array):
-        x_array = np.linspace(0, l, i)
-        z_array = np.linspace(0, L, k)
+        x_array = np.linspace(0, l, i + 1)
+        z_array = np.linspace(0, L, k + 1)
         x, z = get_numerical(M, l, L, x_array, z_array, [x_val], [z_val], var)
         ax1.plot(x_array, np.abs(x[0]), linestyle='--', label=f'I={i} K={k}')
         ax2.plot(z_array, np.abs(z[0]), linestyle='--', label=f'I={i} K={k}')

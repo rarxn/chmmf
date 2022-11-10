@@ -90,7 +90,7 @@ def implicit_solution_kasparov(M, l, x, z):
             q[i] = (gamma * q[i - 1] + u[k - 1, i]) / delitel
 
         u[k, I] = 0
-        for i in range(I - 1, 0, -1):  # начало, стоп, инкремент
+        for i in range(I - 1, -1, -1):  # начало, стоп, инкремент
             u[k, i] = p[i] * u[k, i + 1] + q[i]
 
     return u
