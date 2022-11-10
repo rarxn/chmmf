@@ -28,6 +28,9 @@ eps = 10 ** -7
 
 table_data = []
 choice = 1
+var = 1
+
+shag = [2, 4]
 
 
 def calc_M():
@@ -36,8 +39,8 @@ def calc_M():
     M = 1j / (2 * k * n)
 
 
-def get_data(_l, _L, _lbd, _n, _x_val, _z_val, _choice, _I, _K, _numb):
-    global l, L, lbd, n, x_val, z_val, choice, I, K, numb
+def get_data(_l, _L, _lbd, _n, _x_val, _z_val, _choice, _I, _K, _numb, _var):
+    global l, L, lbd, n, x_val, z_val, choice, I, K, numb, var, shag
     l = _l
     L = _L
     lbd = _lbd
@@ -49,6 +52,11 @@ def get_data(_l, _L, _lbd, _n, _x_val, _z_val, _choice, _I, _K, _numb):
     K = _K
     numb = _numb
     choice = _choice
+    var = _var
+    if var == 1 or var == 3:
+        shag = [2, 4]
+    else:
+        shag = [2, 2]
 
 
 class Window:
@@ -72,6 +80,7 @@ class Window:
         self.K = StringVar(value=str(K))
         self.numb = StringVar(value=str(numb))
         self.choice = IntVar(value=str(choice))
+        self.var = IntVar(value=str(var))
 
     def run(self):
         self.draw()
@@ -107,6 +116,10 @@ class Window:
         Radiobutton(self.root, text="Численное решение", variable=self.choice, value=2).grid(row=r, column=2,
                                                                                              columnspan=2)
         r += 1
+        Radiobutton(self.root, text="Никитин", variable=self.var, value=1).grid(row=r, column=0)
+        Radiobutton(self.root, text="Яшакин", variable=self.var, value=2).grid(row=r, column=1, columnspan=2)
+        Radiobutton(self.root, text="Каспаров", variable=self.var, value=3).grid(row=r, column=3)
+        r += 1
         self.button = Button(self.root, text="Построить", command=self.start)
         self.button.grid(row=r, column=0, columnspan=2)
         self.button2 = Button(self.root, text="Таблица", command=self.open_table)
@@ -116,7 +129,9 @@ class Window:
         self.button["state"] = DISABLED
         get_data(float(self.l.get()), float(self.L.get()), float(self.lbd.get()), float(self.n.get()),
                  float(self.x_val.get()), float(self.z_val.get()), int(self.choice.get()), int(self.I.get()),
-                 int(self.K.get()), int(self.numb.get()))
+                 int(self.K.get()), int(self.numb.get()), int(self.var.get()))
+        print(
+            f"start with l={l}, L={L}, lambda={lbd}, n={n}, x_val={x_val}, z_val={z_val}, I_start={I}, K_start={K},\n choice={choice}, numb={numb}, var={var}, shag={shag}")
         if choice == 1:
             convergence()
         else:
@@ -126,7 +141,9 @@ class Window:
     def open_table(self):
         get_data(float(self.l.get()), float(self.L.get()), float(self.lbd.get()), float(self.n.get()),
                  float(self.x_val.get()), float(self.z_val.get()), int(self.choice.get()), int(self.I.get()),
-                 int(self.K.get()), int(self.numb.get()))
+                 int(self.K.get()), int(self.numb.get()), int(self.var.get()))
+        print(
+            f"start with l={l}, L={L}, lambda={lbd}, n={n}, x_val={x_val}, z_val={z_val}, I_start={I}, K_start={K},\n choice={choice}, numb={numb}, var={var}, shag={shag}")
         accuracy()
         w = Toplevel(self.root)
         w.title('Таблица')
@@ -136,7 +153,7 @@ class Window:
         w.grab_set()
         w.focus_set()
         table = ttk.Treeview(w, columns=5, show='headings')
-        heads = ['I', 'K', 'E_hz_hx', 'E_hz/4_hx/2', 'delta_hz_hx']
+        heads = ['I', 'K', 'E_hz_hx', f'E_hz/{shag[1]}_hx/{shag[0]}', 'delta_hz_hx']
         table['columns'] = heads
         for header in heads:
             table.heading(header, text=header, anchor='center')
@@ -156,14 +173,14 @@ def create_plot(title, label):
 
 
 def accuracy():
-    I_array = [I * (2 ** i) for i in range(numb + 1)]
-    K_array = [K * (4 ** k) for k in range(numb + 1)]
+    I_array = [I * (shag[0] ** i) for i in range(numb + 1)]
+    K_array = [K * (shag[1] ** k) for k in range(numb + 1)]
     num_array = []
     an_array = []
     for i, k in zip(I_array, K_array):
         x_array = np.linspace(0, l, i)
         z_array = np.linspace(0, L, k)
-        x, _ = get_numerical(M, l, L, x_array, z_array, [x_val], [z_val])
+        x, _ = get_numerical(M, l, L, x_array, z_array, [x_val], [z_val], var)
         num_array.append(x[0])
         an_array.append(get_analytical1(M, l, L, x_array, z_val, eps))
 
@@ -174,22 +191,14 @@ def accuracy():
         b = np.max(np.abs(np.abs(num_array[i]) - np.abs(an_array[i])))
         c = a / b
         table_data.append([I_array[i - 1], K_array[i - 1], a, b, c])
-        print(I_array[i - 1], K_array[i - 1], a, b, c)
         a = b
-    # k=1
-    # a = np.abs(np.abs(num_array[0][k]) - np.abs(an_array[0][k]))
-    # for i in range(1, len(I_array)):
-    #     b = np.abs(np.abs(num_array[i][k*(2 ** i)]) - np.abs(an_array[i][k*(2 ** i)]))
-    #     c = a / b
-    #     print(I_array[i-1], K_array[i-1], a, b, c)
-    #     a = b
 
 
 def convergence():
     x_array = np.linspace(0, l, count)
     z_array = np.linspace(0, L, count)
-    I_array = [I * (2 ** i) for i in range(numb)]
-    K_array = [K * (4 ** k) for k in range(numb)]
+    I_array = [I * (shag[0] ** i) for i in range(numb)]
+    K_array = [K * (shag[1] ** k) for k in range(numb)]
 
     ax1, ax2 = create_plot(f'z={z_val:.4}', 'x, мкм'), create_plot(f'x={x_val:.4}', 'z, мкм')
 
@@ -199,7 +208,7 @@ def convergence():
     for i, k in zip(I_array, K_array):
         x_array = np.linspace(0, l, i)
         z_array = np.linspace(0, L, k)
-        x, z = get_numerical(M, l, L, x_array, z_array, [x_val], [z_val])
+        x, z = get_numerical(M, l, L, x_array, z_array, [x_val], [z_val], var)
         ax1.plot(x_array, np.abs(x[0]), linestyle='--', label=f'I={i} K={k}')
         ax2.plot(z_array, np.abs(z[0]), linestyle='--', label=f'I={i} K={k}')
     ax1.legend()
@@ -213,7 +222,7 @@ def numerical():
     x_values = [0.01, 3., 6., l]
     z_values = [0.01, L / 3, 2 * L / 3, L]
     ax1, ax2 = create_plot('', 'x, мкм'), create_plot('', 'z, мкм')
-    x, z = get_numerical(M, l, L, x_array, z_array, x_values, z_values)
+    x, z = get_numerical(M, l, L, x_array, z_array, x_values, z_values, var)
 
     [ax1.plot(x_array, np.abs(_x), label=f'z= {val:.4} мкм') for _x, val in zip(x, z_values)]
     ax1.legend(loc='upper right')
@@ -225,5 +234,5 @@ def numerical():
 
 if __name__ == '__main__':
     # accuracy()
-    window = Window(310, 280, 'model')
+    window = Window(320, 290, 'model')
     window.run()
